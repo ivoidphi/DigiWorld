@@ -8,38 +8,38 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.io.File;
 
-
 public class Player {
 
     GamePanel gp;
 
-    // Position on screen
     public int x, y;
     public int speed = 4;
 
     // Animation
     BufferedImage[] idleFrames;
+    BufferedImage[] walkLeftFrames;
+    BufferedImage[] walkRightFrames;
     BufferedImage currentFrame;
     int animFrame = 0;
     int animCounter = 0;
-    int animDelay = 15; // frames before switching (lower = faster)
+    int animDelay = 5;
 
     String direction = "down";
+    String lastDirection = "down"; // tracks direction changes
     boolean moving = false;
 
     public Player(GamePanel gp) {
         this.gp = gp;
-
-        // Start in center of screen
         x = gp.screenWidth / 2 - gp.tileSize / 2;
         y = gp.screenHeight / 2 - gp.tileSize / 2;
-
         loadSprites();
     }
 
     private void loadSprites() {
         try {
-            idleFrames = loadAnimatedGif("res/player/kyoflare-idle.gif");
+            idleFrames      = loadAnimatedGif("res/player/kyoflare-idle.gif");
+            walkLeftFrames  = loadAnimatedGif("res/player/kyoflare-walkleft.gif");
+            walkRightFrames = loadAnimatedGif("res/player/kyoflare-walkright.gif");
             currentFrame = idleFrames[0];
         } catch (Exception e) {
             System.out.println("Could not find GIF!");
@@ -47,25 +47,27 @@ public class Player {
         }
     }
 
-    // Loads all frames from an animated GIF using direct file path
     private BufferedImage[] loadAnimatedGif(String path) throws IOException {
         ArrayList<BufferedImage> frames = new ArrayList<>();
-
         File gifFile = new File(path);
-        System.out.println("Looking for GIF at: " + gifFile.getAbsolutePath());
-
         ImageInputStream stream = ImageIO.createImageInputStream(gifFile);
-
         Iterator<ImageReader> readers = ImageIO.getImageReadersByFormatName("gif");
         ImageReader reader = readers.next();
         reader.setInput(stream);
-
         int numFrames = reader.getNumImages(true);
         for (int i = 0; i < numFrames; i++) {
             frames.add(reader.read(i));
         }
-
         return frames.toArray(new BufferedImage[0]);
+    }
+
+    // Returns the correct frame array for the current direction
+    private BufferedImage[] currentFrames() {
+        return switch (direction) {
+            case "left"  -> walkLeftFrames;
+            case "right" -> walkRightFrames;
+            default      -> idleFrames;
+        };
     }
 
     public void update(KeyHandler key) {
@@ -89,18 +91,39 @@ public class Player {
             moving = true;
         }
 
-        // Always animate idle (even when not moving)
-        animCounter++;
-        if (animCounter >= animDelay) {
-            animFrame = (animFrame + 1) % idleFrames.length;
+        // Reset animation when direction changes
+        if (!direction.equals(lastDirection)) {
+            animFrame = 0;
             animCounter = 0;
+            lastDirection = direction;
         }
 
-        currentFrame = idleFrames[animFrame];
-    }
+        if (moving) {
+            // Animate walk
+            animCounter++;
+            if (animCounter >= animDelay) {
+                animFrame = (animFrame + 1) % currentFrames().length;
+                animCounter = 0;
+            }
 
+            // Pick walk animation
+            switch (direction) {
+                case "left"  -> currentFrame = walkLeftFrames[animFrame];
+                case "right" -> currentFrame = walkRightFrames[animFrame];
+                default      -> currentFrame = idleFrames[animFrame];
+            }
+        } else {
+            // Animate idle
+            animCounter++;
+            if (animCounter >= animDelay) {
+                animFrame = (animFrame + 1) % idleFrames.length;
+                animCounter = 0;
+            }
+            currentFrame = idleFrames[animFrame]; // always idle when stopped
+        }
+    }
     public void draw(Graphics2D g2) {
-        // Draw scaled up 2x so it's visible (32x32 -> 64x64)
+        // Draw scaled up 2x (32x32 -> 64x64)
         g2.drawImage(currentFrame, x, y, gp.tileSize * 2, gp.tileSize * 2, null);
     }
 }
