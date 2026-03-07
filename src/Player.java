@@ -27,6 +27,7 @@ public class Player {
     String direction = "down";
     String lastDirection = "down"; // tracks direction changes
     boolean moving = false;
+    int walkSoundCounter = 0;
 
     public Player(GamePanel gp) {
         this.gp = gp;
@@ -106,6 +107,13 @@ public class Player {
                 animCounter = 0;
             }
 
+            // Play walk sound every 10 frames
+            walkSoundCounter++;
+            if (walkSoundCounter >= 10) {
+                gp.playWalkSound();
+                walkSoundCounter = 0;
+            }
+
             // Pick walk animation
             switch (direction) {
                 case "left"  -> currentFrame = walkLeftFrames[animFrame];
@@ -113,6 +121,10 @@ public class Player {
                 default      -> currentFrame = idleFrames[animFrame];
             }
         } else {
+            walkSoundCounter = 0;
+            // Stop walk sound when character stops moving
+            gp.stopWalkSound();
+            
             // Animate idle
             animCounter++;
             if (animCounter >= animDelay) {
