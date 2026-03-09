@@ -11,12 +11,15 @@ public class GamePanel extends JPanel implements Runnable {
     final int screenWidth = tileSize * screenCols;   // 512px
     final int screenHeight = tileSize * screenRows;  // 384px
 
+
     final int FPS = 60;
     Thread gameThread;
 
     KeyHandler keyHandler = new KeyHandler();
     Player player = new Player(this);
+    NPC chiefRei;
     TileManager tileManager = new TileManager(this); // NEW
+
 
     Clip backgroundMusic;
     Clip walkSound;
@@ -28,8 +31,20 @@ public class GamePanel extends JPanel implements Runnable {
         this.setFocusable(true);
         this.addKeyListener(keyHandler);
         playBackgroundMusic();
+
+        chiefRei = new NPC(
+                this,
+                "Chief Rei",
+                6, 5,                        // tile position (col, row)
+                "res/player/chief-rei.png",     // sprite path
+                new String[]{
+                        "Welcome, traveler. I am Chief Rei, guardian of this village.",
+                        "You seek the Alpha Beast? Then follow the Mystic Forest.",
+                        "The path will test you before you reach the Alpha. Be prepared."
+                }
+        );
     }
- 
+
     private void playBackgroundMusic() {
         try {
             File musicFile = new File("res/SOUNDS/BG_MUSIC.wav");  // para ilis bg sound
@@ -39,7 +54,7 @@ public class GamePanel extends JPanel implements Runnable {
             
             
             FloatControl gainControl = (FloatControl) backgroundMusic.getControl(FloatControl.Type.MASTER_GAIN);
-            gainControl.setValue(-15.0f); // pang pa hinay sa volume sa bg music
+            gainControl.setValue(-35.0f); // pang pa hinay sa volume sa bg music
             
             backgroundMusic.loop(Clip.LOOP_CONTINUOUSLY);
         } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
@@ -102,6 +117,8 @@ public class GamePanel extends JPanel implements Runnable {
 
     public void update() {
         player.update(keyHandler);
+        chiefRei.update(keyHandler);
+        keyHandler.clearPressed();
     }
 
     @Override
@@ -111,7 +128,7 @@ public class GamePanel extends JPanel implements Runnable {
 
         tileManager.draw(g2); // draw map FIRST
         player.draw(g2);      // draw player ON TOP
-
+        chiefRei.draw(g2);
         g2.dispose();
     }
 }

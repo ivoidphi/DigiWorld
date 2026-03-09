@@ -52,7 +52,7 @@ public class TileManager {
                 int x = col * gp.tileSize;   // pixel position x
                 int y = row * gp.tileSize;   // pixel position y
 
-                g2.drawImage(tileImages[tileType], x, y, gp.tileSize, gp.tileSize, null);
+                g2.drawImage(tileImages[tileType], x, y, gp.tileSize*2, gp.tileSize*2, null);
             }
         }
     }

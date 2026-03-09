@@ -1,19 +1,17 @@
-import javax.swing.JFrame;
+import javax.swing.*;
 
-public class Main {
-    public static void main(String[] args) {
-        JFrame window = new JFrame();
-        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        window.setResizable(true);
-        window.setTitle("DigiWorld");
+void main() {
+    JFrame window = new JFrame();
+    window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    window.setResizable(true);
+    window.setTitle("DigiWorld");
 
-        GamePanel gamePanel = new GamePanel();
-        window.add(gamePanel);
+    GamePanel gamePanel = new GamePanel();
+    window.add(gamePanel);
 
-        window.pack(); // fits window to GamePanel size
-        window.setLocationRelativeTo(null); // center on screen
-        window.setVisible(true);
+    window.pack(); // fits window to GamePanel size
+    window.setLocationRelativeTo(null); // center on screen
+    window.setVisible(true);
 
-        gamePanel.startGameLoop();
-    }
+    gamePanel.startGameLoop();
 }
