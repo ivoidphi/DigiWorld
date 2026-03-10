@@ -3,7 +3,7 @@ import javax.swing.*;
 void main() {
     JFrame window = new JFrame();
     window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    window.setResizable(true);
+    window.setResizable(false);
     window.setTitle("DigiWorld");
 
     GamePanel gamePanel = new GamePanel();

@@ -1,8 +1,13 @@
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 public class Player {
 
@@ -11,89 +16,86 @@ public class Player {
     public int x, y;
     public int speed = 4;
 
-    // Single PNG per state (swap these for sprite strips later)
-    BufferedImage idleFrame;
-    BufferedImage walkLeftFrame;
-    BufferedImage walkRightFrame;
-    BufferedImage currentFrame;
-    BufferedImage behindFrame;
+    List<BufferedImage> framesDown, framesLeft, framesRight, framesUp;
+    List<BufferedImage> currentFrames;
+
+    int frameIndex = 0;
+    int frameTimer = 0;
+    int frameDelay = 6;
 
     String direction = "down";
     boolean moving = false;
 
     public Player(GamePanel gp) {
         this.gp = gp;
-        x = gp.screenWidth / 2 - gp.tileSize / 2;
+        x = gp.screenWidth  / 2 - gp.tileSize / 2;
         y = gp.screenHeight / 2 - gp.tileSize / 2;
         loadSprites();
     }
 
     private void loadSprites() {
-        idleFrame      = loadPNG("res/player/kyoflare-front.png");
-        walkLeftFrame  = loadPNG("res/player/kyoflare-left.png");
-        walkRightFrame = loadPNG("res/player/kyoflare-right.png");
-        behindFrame = loadPNG("res/player/kyoflare-behind.png");
-
-        // Fallback: if walk PNGs are missing, reuse idle
-        if (walkLeftFrame  == null) walkLeftFrame  = idleFrame;
-        if (walkRightFrame == null) walkRightFrame = idleFrame;
-
-        currentFrame = idleFrame;
+        framesDown  = loadGIF("res/player/player-walking-down.gif");
+        framesLeft  = loadGIF("res/player/player-walking-left.gif");
+        framesRight = loadGIF("res/player/player-walking-right.gif");
+        framesUp    = loadGIF("res/player/player-walking-up.gif");
+        currentFrames = framesDown;
     }
 
-    private BufferedImage loadPNG(String path) {
+    private List<BufferedImage> loadGIF(String path) {
+        List<BufferedImage> frames = new ArrayList<>();
         try {
-            BufferedImage img = ImageIO.read(new File(path));
-            if (img == null) {
-                System.out.println("Warning: ImageIO returned null for " + path);
-            }
-            return img;
+            ImageInputStream stream = ImageIO.createImageInputStream(new File(path));
+            Iterator<ImageReader> readers = ImageIO.getImageReadersByFormatName("gif");
+            if (!readers.hasNext()) return frames;
+            ImageReader reader = readers.next();
+            reader.setInput(stream);
+            int count = reader.getNumImages(true);
+            for (int i = 0; i < count; i++) frames.add(reader.read(i));
+            reader.dispose();
         } catch (IOException e) {
-            System.out.println("Could not load PNG: " + path);
-            return null;
+            System.out.println("Could not load GIF: " + path);
         }
+        return frames;
     }
 
     public void update(KeyHandler key) {
         moving = false;
+        List<BufferedImage> newFrames = currentFrames;
 
         if (key.up) {
-            direction = "up";
-            y -= speed;
-            moving = true;
+            direction = "up";    y -= speed; moving = true; newFrames = framesUp;
         } else if (key.down) {
-            direction = "down";
-            y += speed;
-            moving = true;
+            direction = "down";  y += speed; moving = true; newFrames = framesDown;
         } else if (key.left) {
-            direction = "left";
-            x -= speed;
-            moving = true;
+            direction = "left";  x -= speed; moving = true; newFrames = framesLeft;
         } else if (key.right) {
-            direction = "right";
-            x += speed;
-            moving = true;
+            direction = "right"; x += speed; moving = true; newFrames = framesRight;
         }
 
-        // Pick frame based on direction
-        if (moving) {
-            currentFrame = switch (direction) {
-                case "left"  -> walkLeftFrame;
-                case "right" -> walkRightFrame;
-                case "up" -> behindFrame;
-                default      -> idleFrame;
-            };
+        if (newFrames != currentFrames) {
+            currentFrames = newFrames;
+            frameIndex = 0;
+            frameTimer = 0;
+        }
 
+        if (moving) {
+            frameTimer++;
+            if (frameTimer >= frameDelay) {
+                frameTimer = 0;
+                frameIndex = (frameIndex + 1) % currentFrames.size();
+            }
             gp.playWalkSound();
         } else {
-            currentFrame = idleFrame;
+            frameIndex = 0;
+            frameTimer = 0;
             gp.stopWalkSound();
+            currentFrames = framesDown;
         }
     }
 
     public void draw(Graphics2D g2) {
-        if (currentFrame != null) {
-            g2.drawImage(currentFrame, x, y, gp.tileSize * 2, gp.tileSize * 2, null);
+        if (currentFrames != null && !currentFrames.isEmpty()) {
+            g2.drawImage(currentFrames.get(frameIndex), x, y, gp.tileSize, gp.tileSize, null);
         }
     }
 }
