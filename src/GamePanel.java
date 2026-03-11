@@ -43,6 +43,13 @@ public class GamePanel extends JPanel implements Runnable {
                 }
         );
 
+        chiefRei = new NPC(this, "Chief Rei", 10, 5, "res/player/chief-rei.png",
+                World.HOUSE,
+                new String[]{
+                        "Welcome, home b*tch",
+                }
+        );
+
         playBackgroundMusic();
     }
 
