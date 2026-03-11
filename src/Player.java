@@ -11,20 +11,18 @@ import java.util.List;
 
 public class Player {
 
-    GamePanel gp;
+    private final GamePanel gp;
 
     public int x, y;
-    public int speed = 4;
+    private final int speed = 4;
+    private final int frameDelay = 6;
 
-    List<BufferedImage> framesDown, framesLeft, framesRight, framesUp;
-    List<BufferedImage> currentFrames;
+    private List<BufferedImage> framesDown, framesLeft, framesRight, framesUp;
+    private List<BufferedImage> currentFrames;
 
-    int frameIndex = 0;
-    int frameTimer = 0;
-    int frameDelay = 6;
-
-    String direction = "down";
-    boolean moving = false;
+    private int frameIndex = 0;
+    private int frameTimer = 0;
+    private boolean moving = false;
 
     public Player(GamePanel gp) {
         this.gp = gp;
@@ -62,14 +60,20 @@ public class Player {
         moving = false;
         List<BufferedImage> newFrames = currentFrames;
 
-        if (key.up) {
-            direction = "up";    y -= speed; moving = true; newFrames = framesUp;
-        } else if (key.down) {
-            direction = "down";  y += speed; moving = true; newFrames = framesDown;
-        } else if (key.left) {
-            direction = "left";  x -= speed; moving = true; newFrames = framesLeft;
-        } else if (key.right) {
-            direction = "right"; x += speed; moving = true; newFrames = framesRight;
+        int nextX = x;
+        int nextY = y;
+
+        if (key.up)         { nextY -= speed; moving = true; newFrames = framesUp; }
+        else if (key.down)  { nextY += speed; moving = true; newFrames = framesDown; }
+        else if (key.left)  { nextX -= speed; moving = true; newFrames = framesLeft; }
+        else if (key.right) { nextX += speed; moving = true; newFrames = framesRight; }
+
+        // Check all 4 corners of the player hitbox before moving
+        if (moving && !isCollidingAt(nextX, nextY)) {
+            x = nextX;
+            y = nextY;
+        } else {
+            moving = false;
         }
 
         if (newFrames != currentFrames) {
@@ -88,14 +92,31 @@ public class Player {
         } else {
             frameIndex = 0;
             frameTimer = 0;
-            gp.stopWalkSound();
             currentFrames = framesDown;
+            gp.stopWalkSound();
         }
+
+        clampToBounds();
+    }
+
+    private boolean isCollidingAt(int nextX, int nextY) {
+        int size = gp.tileSize - 1; // hitbox size matches tile
+        return gp.tileManager.isSolid(nextX,        nextY       ) // top-left
+                || gp.tileManager.isSolid(nextX + size,  nextY       ) // top-right
+                || gp.tileManager.isSolid(nextX,         nextY + size) // bottom-left
+                || gp.tileManager.isSolid(nextX + size,  nextY + size); // bottom-right
+    }
+
+
+    private void clampToBounds() {
+        if (x < 0) x = 0;
+        if (y < 0) y = 0;
+        if (x > gp.screenWidth  - gp.tileSize) x = gp.screenWidth  - gp.tileSize;
+        if (y > gp.screenHeight - gp.tileSize) y = gp.screenHeight - gp.tileSize;
     }
 
     public void draw(Graphics2D g2) {
-        if (currentFrames != null && !currentFrames.isEmpty()) {
+        if (currentFrames != null && !currentFrames.isEmpty())
             g2.drawImage(currentFrames.get(frameIndex), x, y, gp.tileSize, gp.tileSize, null);
-        }
     }
 }

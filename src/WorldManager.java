@@ -1,8 +1,10 @@
 public class WorldManager {
 
-    GamePanel gp;
+    private final GamePanel gp;
+    private final World[] worlds;
     public int currentWorldIndex = 0;
-    World[] worlds;
+
+    private static final int PORTAL_TILE = 9;
 
     public WorldManager(GamePanel gp) {
         this.gp = gp;
@@ -38,7 +40,7 @@ public class WorldManager {
                         {0,0,0,0,0,8,0,0,0,0,0,0,0,0,0,0},
                 }),
 
-                new World("Mystic Forest", 0, new int[][]{ // loops back to world 0
+                new World("Mystic Forest", 3, new int[][]{
                         {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
                         {0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
                         {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
@@ -52,7 +54,23 @@ public class WorldManager {
                         {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
                         {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
                 }),
+
+                new World("House", 0, new int[][]{
+                        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                        {0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                        {0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0},
+                        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                        {0,0,0,0,4,0,0,0,0,0,0,0,3,0,0,0},
+                        {0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0},
+                        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                }),
         };
+        loadWorld(0);
     }
 
     public void loadWorld(int index) {
@@ -64,15 +82,18 @@ public class WorldManager {
         return worlds[currentWorldIndex];
     }
 
+    public String getCurrentWorldName() {
+        return getCurrentWorld().getName();
+    }
+
     public void checkPortal() {
         int playerCol = gp.player.x / gp.tileSize;
         int playerRow = gp.player.y / gp.tileSize;
-        if (playerCol == 1 && playerRow == 0) {
-            gp.transition.triggerTransition(getCurrentWorld().portalDestination);
+        int[][] map = getCurrentWorld().map;
+        if (playerRow < 0 || playerRow >= map.length)    return;
+        if (playerCol < 0 || playerCol >= map[0].length) return;
+        if (map[playerRow][playerCol] == PORTAL_TILE) {
+            gp.transition.triggerTransition(getCurrentWorld().getPortalDestination());
         }
-    }
-
-    public String getCurrentWorldName() {
-        return getCurrentWorld().name;
     }
 }

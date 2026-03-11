@@ -8,9 +8,8 @@ void main() {
 
     GamePanel gamePanel = new GamePanel();
     window.add(gamePanel);
-
-    window.pack(); // fits window to GamePanel size
-    window.setLocationRelativeTo(null); // center on screen
+    window.pack();
+    window.setLocationRelativeTo(null);
     window.setVisible(true);
 
     gamePanel.startGameLoop();
