@@ -60,20 +60,54 @@ public class Player {
         moving = false;
         List<BufferedImage> newFrames = currentFrames;
 
-        int nextX = x;
-        int nextY = y;
+        int dx = 0, dy = 0;
 
-        if (key.up)         { nextY -= speed; moving = true; newFrames = framesUp; }
-        else if (key.down)  { nextY += speed; moving = true; newFrames = framesDown; }
-        else if (key.left)  { nextX -= speed; moving = true; newFrames = framesLeft; }
-        else if (key.right) { nextX += speed; moving = true; newFrames = framesRight; }
+        // Primary direction from keys
+        if (key.up)    { dy -= speed; newFrames = framesUp; }
+        if (key.down)  { dy += speed; newFrames = framesDown; }
+        if (key.left)  { dx -= speed; newFrames = framesLeft; }
+        if (key.right) { dx += speed; newFrames = framesRight; }
 
-        // Check all 4 corners of the player hitbox before moving
-        if (moving && !isCollidingAt(nextX, nextY)) {
-            x = nextX;
-            y = nextY;
-        } else {
-            moving = false;
+        if (dx != 0 || dy != 0) moving = true;
+
+        if (moving) {
+            if (!isCollidingAt(x + dx, y + dy)) {
+                // Free — move normally
+                x += dx;
+                y += dy;
+            } else if (dy != 0 && dx == 0) {
+                // Only vertical pressed, try sliding horizontally based on position
+                // nudge left or right depending on which side has more room
+                int slideDir = getSlideDirX(dy);
+                if (slideDir != 0 && !isCollidingAt(x + slideDir, y + dy)) {
+                    x += slideDir;
+                    y += dy;
+                    newFrames = (slideDir < 0) ? framesLeft : framesRight;
+                } else if (slideDir != 0 && !isCollidingAt(x + slideDir, y)) {
+                    x += slideDir;
+                    newFrames = (slideDir < 0) ? framesLeft : framesRight;
+                } else {
+                    moving = false;
+                }
+            } else if (dx != 0 && dy == 0) {
+                // Only horizontal pressed, try sliding vertically
+                int slideDir = getSlideDirY(dx);
+                if (slideDir != 0 && !isCollidingAt(x + dx, y + slideDir)) {
+                    x += dx;
+                    y += slideDir;
+                    newFrames = (slideDir < 0) ? framesUp : framesDown;
+                } else if (slideDir != 0 && !isCollidingAt(x, y + slideDir)) {
+                    y += slideDir;
+                    newFrames = (slideDir < 0) ? framesUp : framesDown;
+                } else {
+                    moving = false;
+                }
+            } else {
+                // Both axes pressed (diagonal), try each axis independently
+                if (!isCollidingAt(x + dx, y)) x += dx;
+                else if (!isCollidingAt(x, y + dy)) y += dy;
+                else moving = false;
+            }
         }
 
         if (newFrames != currentFrames) {
@@ -92,12 +126,24 @@ public class Player {
         } else {
             frameIndex = 0;
             frameTimer = 0;
-            currentFrames = framesDown;
             gp.stopWalkSound();
         }
 
         clampToBounds();
     }
+
+    private int getSlideDirX(int dy) {
+        if (!isCollidingAt(x - speed, y + dy)) return -speed;
+        if (!isCollidingAt(x + speed, y + dy)) return  speed;
+        return 0;
+    }
+
+    private int getSlideDirY(int dx) {
+        if (!isCollidingAt(x + dx, y - speed)) return -speed;
+        if (!isCollidingAt(x + dx, y + speed)) return  speed;
+        return 0;
+    }
+
 
     private boolean isCollidingAt(int nextX, int nextY) {
         int size = gp.tileSize - 1; // hitbox size matches tile

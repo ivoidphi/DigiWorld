@@ -113,7 +113,7 @@ public class NPC {
 
         // Name text
         g2.setFont(new Font(Font.DIALOG_INPUT, Font.BOLD, 16));
-        g2.setColor(new Color(30, 30, 30));
+        g2.setColor(Color.BLACK);
         g2.drawString(name, nameBoxX + 12, nameBoxY + 26);
 
         // Dialogue text
@@ -125,6 +125,7 @@ public class NPC {
         long now = System.currentTimeMillis();
         boolean blink = (now / 500) % 2 == 0;
         if (blink) {
+            g2.drawString("Press E to continue.", boxX + 680, boxY + 120);
             int arrowX = boxX + boxW - 30;
             int arrowY = boxY + boxH - 20;
             int[] ax = { arrowX, arrowX + 12, arrowX + 6 };
