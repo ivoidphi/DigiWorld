@@ -93,7 +93,12 @@ public class WorldManager {
         if (playerRow < 0 || playerRow >= map.length)    return;
         if (playerCol < 0 || playerCol >= map[0].length) return;
         if (map[playerRow][playerCol] == PORTAL_TILE) {
-            gp.transition.triggerTransition(getCurrentWorld().getPortalDestination());
+            int from = currentWorldIndex;
+            int to = getCurrentWorld().getPortalDestination();
+            if (!gp.getGameState().canUsePortal(from, to)) {
+                return;
+            }
+            gp.transition.triggerTransition(from, to);
         }
     }
 }

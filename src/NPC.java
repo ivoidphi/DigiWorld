@@ -116,18 +116,25 @@ public class NPC {
         g2.setColor(Color.BLACK);
         g2.drawString(name, nameBoxX + 12, nameBoxY + 26);
 
-        // Dialogue text
-        g2.setFont(new Font(Font.DIALOG_INPUT, Font.BOLD, 22));
-        g2.setColor(Color.BLACK);
-        g2.drawString(dialogue[dialogueIndex], boxX + 24, boxY + 52);
+        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        int textPadX = 28;
+        int textPadRight = 28;
+        int textMaxW = boxW - textPadX - textPadRight;
+        g2.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 18));
+        g2.setColor(new Color(25, 28, 38));
+        UiText.drawWrapped(g2, dialogue[dialogueIndex], boxX + textPadX, boxY + 48, textMaxW, 24, 4);
 
-        // Blinking arrow prompt (bottom right)
         long now = System.currentTimeMillis();
         boolean blink = (now / 500) % 2 == 0;
         if (blink) {
-            g2.drawString("Press E to continue.", boxX + 680, boxY + 120);
-            int arrowX = boxX + boxW - 30;
-            int arrowY = boxY + boxH - 20;
+            g2.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 14));
+            FontMetrics fm = g2.getFontMetrics();
+            String hint = "Press E to continue";
+            int hintW = fm.stringWidth(hint);
+            int hintX = Math.max(boxX + textPadX, boxX + boxW - hintW - textPadX);
+            g2.drawString(hint, hintX, boxY + boxH - 18);
+            int arrowX = boxX + boxW - 26;
+            int arrowY = boxY + boxH - 22;
             int[] ax = { arrowX, arrowX + 12, arrowX + 6 };
             int[] ay = { arrowY, arrowY, arrowY + 8 };
             g2.setColor(Color.BLACK);

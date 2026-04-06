@@ -7,15 +7,17 @@ public class TransitionManager {
     private final GamePanel gp;
     private State state = State.NONE;
     private float alpha = 0f;
+    private int fromWorld = 0;
     private int targetWorld = 0;
 
     public TransitionManager(GamePanel gp) {
         this.gp = gp;
     }
 
-    public void triggerTransition(int toWorld) {
+    public void triggerTransition(int fromWorldIndex, int toWorldIndex) {
         if (state != State.NONE) return;
-        targetWorld = toWorld;
+        fromWorld = fromWorldIndex;
+        targetWorld = toWorldIndex;
         state = State.FADING_OUT;
         alpha = 0f;
     }
@@ -31,6 +33,7 @@ public class TransitionManager {
                 if (alpha >= 1f) {
                     alpha = 1f;
                     gp.worldManager.loadWorld(targetWorld);
+                    gp.getGameState().onPortalTravel(fromWorld, targetWorld);
                     gp.player.x = gp.screenWidth  / 2 - gp.tileSize / 2;
                     gp.player.y = gp.screenHeight / 2 - gp.tileSize / 2;
                     state = State.FADING_IN;
