@@ -1,13 +1,14 @@
+
 import java.awt.*;
 
 public class TransitionManager {
 
-    private enum State { NONE, FADING_OUT, FADING_IN }
+    public enum State { NONE, FADING_OUT, FADING_IN }
 
-    private final GamePanel gp;
-    private State state = State.NONE;
-    private float alpha = 0f;
-    private int targetWorld = 0;
+    State state = State.NONE;
+    float alpha = 0f;
+    int targetWorld = 0;
+    GamePanel gp;
 
     public TransitionManager(GamePanel gp) {
         this.gp = gp;

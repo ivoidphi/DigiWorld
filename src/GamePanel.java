@@ -1,50 +1,63 @@
+
 import javax.swing.*;
 import java.awt.*;
 import javax.sound.sampled.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class GamePanel extends JPanel implements Runnable {
 
-    final int tileSize    = 64;
-    final int screenCols  = 16;
-    final int screenRows  = 12;
+    final int tileSize = 64;
+    final int screenCols = 16;
+    final int screenRows = 12;
     final int screenWidth  = tileSize * screenCols;
     final int screenHeight = tileSize * screenRows;
-    final int FPS          = 60;
+    final int FPS = 60;
 
-    List<NPC> npcs = new ArrayList<>();
     Thread gameThread;
-
-    KeyHandler        keyHandler   = new KeyHandler();
-    Player            player       = new Player(this);
-    TileManager       tileManager  = new TileManager(this);
-    WorldManager      worldManager;
+    StructureManager structureManager = new StructureManager(this);
+    KeyHandler keyHandler    = new KeyHandler();
+    Player player            = new Player(this);
+    TileManager tileManager  = new TileManager(this);
+    WorldManager worldManager;
     TransitionManager transition;
+    NPC chiefRei;
 
-    private Clip walkSound;
+    Clip backgroundMusic;
+    Clip walkSound;
 
     public GamePanel() {
-        setPreferredSize(new Dimension(screenWidth, screenHeight));
-        setBackground(Color.BLACK);
-        setDoubleBuffered(true);
-        setFocusable(true);
-        addKeyListener(keyHandler);
+        this.setPreferredSize(new Dimension(screenWidth, screenHeight));
+        this.setBackground(Color.BLACK);
+        this.setDoubleBuffered(true);
+        this.setFocusable(true);
+        this.addKeyListener(keyHandler);
 
         worldManager = new WorldManager(this);
         transition   = new TransitionManager(this);
-        npcs         = Characters.loadAll(this);
+
+        chiefRei = new NPC(
+                this,
+                "Chief Rei",
+                4, 5,
+                "res/player/chief-rei.png",
+                new String[]{
+                        "Welcome, traveler. I am Chief Rei, guardian of this village.",
+                        "You seek the Alpha Beast? Then follow the Mystic Forest.",
+                        "The path will test you before you reach the Alpha. Be prepared."
+                }
+        );
 
         playBackgroundMusic();
     }
 
     private void playBackgroundMusic() {
         try {
-            AudioInputStream stream = AudioSystem.getAudioInputStream(new File("res/SOUNDS/BG_MUSIC.wav"));
-            Clip backgroundMusic = AudioSystem.getClip();
-            backgroundMusic.open(stream);
-            ((FloatControl) backgroundMusic.getControl(FloatControl.Type.MASTER_GAIN)).setValue(-35.0f);
+            File musicFile = new File("res/SOUNDS/BG_MUSIC.wav");
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(musicFile);
+            backgroundMusic = AudioSystem.getClip();
+            backgroundMusic.open(audioStream);
+            FloatControl gainControl = (FloatControl) backgroundMusic.getControl(FloatControl.Type.MASTER_GAIN);
+            gainControl.setValue(-35.0f);
             backgroundMusic.loop(Clip.LOOP_CONTINUOUSLY);
         } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
             System.out.println("Error playing background music.");
@@ -54,10 +67,12 @@ public class GamePanel extends JPanel implements Runnable {
     public void playWalkSound() {
         try {
             if (walkSound == null) {
-                AudioInputStream stream = AudioSystem.getAudioInputStream(new File("res/SOUNDS/WALK_GRASS.wav"));
+                File soundFile = new File("res/SOUNDS/WALK_GRASS.wav");
+                AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundFile);
                 walkSound = AudioSystem.getClip();
-                walkSound.open(stream);
-                ((FloatControl) walkSound.getControl(FloatControl.Type.MASTER_GAIN)).setValue(6.0f);
+                walkSound.open(audioStream);
+                FloatControl gainControl = (FloatControl) walkSound.getControl(FloatControl.Type.MASTER_GAIN);
+                gainControl.setValue(6.0f);
             }
             if (!walkSound.isRunning()) {
                 walkSound.setFramePosition(0);
@@ -95,10 +110,10 @@ public class GamePanel extends JPanel implements Runnable {
         }
     }
 
-    private void update() {
+    public void update() {
         if (!transition.isTransitioning()) {
             player.update(keyHandler);
-            for (NPC npc : npcs) npc.update(keyHandler);
+            chiefRei.update(keyHandler);
             worldManager.checkPortal();
         }
         transition.update();
@@ -111,14 +126,17 @@ public class GamePanel extends JPanel implements Runnable {
         Graphics2D g2 = (Graphics2D) g;
 
         tileManager.draw(g2);
+        structureManager.drawBeforePlayer(g2);  // bases where player is in front
         player.draw(g2);
-        for (NPC npc : npcs) npc.draw(g2);
+        chiefRei.draw(g2);
+        structureManager.drawAfterPlayer(g2);   // bases where player is behind + all roofs
         transition.draw(g2);
 
-        g2.setFont(new Font("DIALOG_INPUT", Font.BOLD, 25));
+        // World name top-left
+        g2.setFont(new Font("Monospaced", Font.BOLD, 14));
         g2.setColor(Color.WHITE);
         g2.drawString(worldManager.getCurrentWorldName(), 16, 24);
-        g2.drawString("Tile: " + (player.x / tileSize) + ", " + (player.y / tileSize), 16, 44);
+        System.out.println( (player.x/ tileSize) + "," + (player.y / tileSize));
 
         g2.dispose();
     }

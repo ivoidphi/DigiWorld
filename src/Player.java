@@ -1,3 +1,4 @@
+
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
@@ -11,18 +12,27 @@ import java.util.List;
 
 public class Player {
 
-    private final GamePanel gp;
+    GamePanel gp;
 
     public int x, y;
-    private final int speed = 4;
-    private final int frameDelay = 20;
+    public int speed = 4;
 
-    private List<BufferedImage> framesDown, framesLeft, framesRight, framesUp, framesIdle;
-    private List<BufferedImage> currentFrames;
+    // Collision box is smaller than the tile so it feels fair
+    // Adjust these offsets to match your sprite's feet area
+    private static final int CB_X_OFF = 8;   // left offset into tile
+    private static final int CB_Y_OFF = 24;  // top offset (pushes box to lower half)
+    private static final int CB_W     = 48;  // collision box width
+    private static final int CB_H     = 42;  // collision box height
 
-    private int frameIndex = 0;
-    private int frameTimer = 0;
-    private boolean moving = false;
+    List<BufferedImage> framesDown, framesLeft, framesRight, framesUp;
+    List<BufferedImage> currentFrames;
+
+    int frameIndex = 0;
+    int frameTimer = 0;
+    int frameDelay = 6;
+
+    String direction = "down";
+    boolean moving = false;
 
     public Player(GamePanel gp) {
         this.gp = gp;
@@ -32,11 +42,10 @@ public class Player {
     }
 
     private void loadSprites() {
-        framesDown  = loadGIF("res/player/v3CharacterDown.gif");
-        framesLeft  = loadGIF("res/player/v3CharacterLeft.gif");
-        framesRight = loadGIF("res/player/v3CharacterRight.gif");
-        framesUp    = loadGIF("res/player/v3CharacterUp.gif");
-        framesIdle = loadGIF("res/player/v3CharacterIdle.gif");
+        framesDown  = loadGIF("res/player/player-walking-down.gif");
+        framesLeft  = loadGIF("res/player/player-walking-left.gif");
+        framesRight = loadGIF("res/player/player-walking-right.gif");
+        framesUp    = loadGIF("res/player/player-walking-up.gif");
         currentFrames = framesDown;
     }
 
@@ -57,56 +66,34 @@ public class Player {
         return frames;
     }
 
+    /** Returns the player's collision rectangle at their current position. */
+    public Rectangle getCollisionRect() {
+        return new Rectangle(x + CB_X_OFF, y + CB_Y_OFF, CB_W, CB_H);
+    }
+
+    /** Returns a collision rectangle offset by (dx, dy) — used for lookahead. */
+    private Rectangle getCollisionRect(int dx, int dy) {
+        return new Rectangle(x + CB_X_OFF + dx, y + CB_Y_OFF + dy, CB_W, CB_H);
+    }
+
     public void update(KeyHandler key) {
         moving = false;
         List<BufferedImage> newFrames = currentFrames;
 
         int dx = 0, dy = 0;
 
-        if (key.up)    { dy -= speed; newFrames = framesUp; }
-        if (key.down)  { dy += speed; newFrames = framesDown; }
-        if (key.left)  { dx -= speed; newFrames = framesLeft; }
-        if (key.right) { dx += speed; newFrames = framesRight; }
+        if (key.up)         { direction = "up";    dy = -speed; newFrames = framesUp; }
+        else if (key.down)  { direction = "down";  dy =  speed; newFrames = framesDown; }
+        else if (key.left)  { direction = "left";  dx = -speed; newFrames = framesLeft; }
+        else if (key.right) { direction = "right"; dx =  speed; newFrames = framesRight; }
 
-        if (dx != 0 || dy != 0) moving = true;
-
-        if (moving) {
-            if (!isCollidingAt(x + dx, y + dy)) {
+        if (dx != 0 || dy != 0) {
+            moving = true;
+            // Only move if the destination doesn't collide with any structure
+            if (!gp.structureManager.collidesWithAny(getCollisionRect(dx, dy))) {
                 x += dx;
                 y += dy;
-            } else if (dy != 0 && dx == 0) {
-                int slideDir = getSlideDirX(dy);
-                if (slideDir != 0 && !isCollidingAt(x + slideDir, y + dy)) {
-                    x += slideDir;
-                    y += dy;
-                    newFrames = (slideDir < 0) ? framesLeft : framesRight;
-                } else if (slideDir != 0 && !isCollidingAt(x + slideDir, y)) {
-                    x += slideDir;
-                    newFrames = (slideDir < 0) ? framesLeft : framesRight;
-                } else {
-                    moving = false;
-                }
-            } else if (dx != 0 && dy == 0) {
-                int slideDir = getSlideDirY(dx);
-                if (slideDir != 0 && !isCollidingAt(x + dx, y + slideDir)) {
-                    x += dx;
-                    y += slideDir;
-                    newFrames = (slideDir < 0) ? framesUp : framesDown;
-                } else if (slideDir != 0 && !isCollidingAt(x, y + slideDir)) {
-                    y += slideDir;
-                    newFrames = (slideDir < 0) ? framesUp : framesDown;
-                } else {
-                    moving = false;
-                }
-            } else {
-                if (!isCollidingAt(x + dx, y)) x += dx;
-                else if (!isCollidingAt(x, y + dy)) y += dy;
-                else moving = false;
             }
-        }
-
-        if (!moving) {
-            newFrames = framesIdle;
         }
 
         if (newFrames != currentFrames) {
@@ -115,55 +102,27 @@ public class Player {
             frameTimer = 0;
         }
 
-        frameTimer++;
-        if (frameTimer >= frameDelay) {
-            frameTimer = 0;
-            if (!currentFrames.isEmpty())
-                frameIndex = (frameIndex + 1) % currentFrames.size();
-        }
-
         if (moving) {
+            frameTimer++;
+            if (frameTimer >= frameDelay) {
+                frameTimer = 0;
+                frameIndex = (frameIndex + 1) % currentFrames.size();
+            }
             gp.playWalkSound();
         } else {
+            frameIndex = 0;
+            frameTimer = 0;
             gp.stopWalkSound();
+            currentFrames = framesDown;
         }
-
-        clampToBounds();
-    }
-
-
-
-    private int getSlideDirX(int dy) {
-        if (!isCollidingAt(x - speed, y + dy)) return -speed;
-        if (!isCollidingAt(x + speed, y + dy)) return  speed;
-        return 0;
-    }
-
-    private int getSlideDirY(int dx) {
-        if (!isCollidingAt(x + dx, y - speed)) return -speed;
-        if (!isCollidingAt(x + dx, y + speed)) return  speed;
-        return 0;
-    }
-
-
-    private boolean isCollidingAt(int nextX, int nextY) {
-        int size = gp.tileSize - 1; // hitbox size matches tile
-        return gp.tileManager.isSolid(nextX,        nextY       ) // top-left
-                || gp.tileManager.isSolid(nextX + size,  nextY       ) // top-right
-                || gp.tileManager.isSolid(nextX,         nextY + size) // bottom-left
-                || gp.tileManager.isSolid(nextX + size,  nextY + size); // bottom-right
-    }
-
-
-    private void clampToBounds() {
-        if (x < 0) x = 0;
-        if (y < 0) y = 0;
-        if (x > gp.screenWidth  - gp.tileSize) x = gp.screenWidth  - gp.tileSize;
-        if (y > gp.screenHeight - gp.tileSize) y = gp.screenHeight - gp.tileSize;
     }
 
     public void draw(Graphics2D g2) {
         if (currentFrames != null && !currentFrames.isEmpty())
             g2.drawImage(currentFrames.get(frameIndex), x, y, gp.tileSize, gp.tileSize, null);
+
+        // Uncomment to debug collision box:
+        g2.setColor(Color.RED);
+         g2.draw(getCollisionRect());
     }
 }

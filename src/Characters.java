@@ -7,7 +7,7 @@ public class Characters {
         List<NPC> npcs = new ArrayList<>();
 
         npcs.add(new NPC(gp, "Prof. Alfred", 9, 2, "res/player/chief-rei.png",
-                World.ALPHA_VILLAGE,
+
                 new String[]{
                         "Welcome, traveler. I am Professor Alfred, guardian of this village.",
                         "You seek the Alpha Beast? Then follow the Mystic Forest.",
@@ -16,13 +16,13 @@ public class Characters {
         ));
 
         npcs.add(new NPC(gp, "Chief Rei", 10, 5, "res/player/chief-rei.png",
-                World.HOUSE,
+
                 new String[]{
                         "Welcome, home b*tch",
                 }
         ));
 
-        npcs.add(new  NPC(gp, "Utin", 10, 2, "res/player/chief-rei.png", World.BETA_CITY,
+        npcs.add(new  NPC(gp, "Utin", 10, 2, "res/player/chief-rei.png",
                 new String[]{
                     "Hi bietch!",
                 }));
