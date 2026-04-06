@@ -103,6 +103,8 @@ But not everything is as it seems. Tensions between the lab staff and the Genera
 | Neil Aldrich Assedilla | Developer |
 | John Jassim Elarcosa | Developer |
 | Ken Edrian Bucog | Developer |
+| Rhonn Vincent Sanico | Developer |
+
 
 ---
 
