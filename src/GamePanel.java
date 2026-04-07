@@ -1,8 +1,9 @@
-
 import javax.swing.*;
 import java.awt.*;
 import javax.sound.sampled.*;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GamePanel extends JPanel implements Runnable {
 
@@ -15,12 +16,12 @@ public class GamePanel extends JPanel implements Runnable {
 
     Thread gameThread;
     StructureManager structureManager = new StructureManager(this);
-    KeyHandler keyHandler    = new KeyHandler();
-    Player player            = new Player(this);
-    TileManager tileManager  = new TileManager(this);
+    KeyHandler keyHandler   = new KeyHandler();
+    Player player           = new Player(this);
+    TileManager tileManager = new TileManager(this);
     WorldManager worldManager;
     TransitionManager transition;
-    NPC chiefRei;
+    List<NPC> npcs = new ArrayList<>();
 
     Clip backgroundMusic;
     Clip walkSound;
@@ -35,20 +36,11 @@ public class GamePanel extends JPanel implements Runnable {
         worldManager = new WorldManager(this);
         transition   = new TransitionManager(this);
 
-        chiefRei = new NPC(
-                this,
-                "Chief Rei",
-                4, 5,
-                "res/player/chief-rei.png",
-                new String[]{
-                        "Welcome, traveler. I am Chief Rei, guardian of this village.",
-                        "You seek the Alpha Beast? Then follow the Mystic Forest.",
-                        "The path will test you before you reach the Alpha. Be prepared."
-                }
-        );
+        npcs = Characters.loadAll(this, 0);
 
         playBackgroundMusic();
     }
+
 
     private void playBackgroundMusic() {
         try {
@@ -113,7 +105,7 @@ public class GamePanel extends JPanel implements Runnable {
     public void update() {
         if (!transition.isTransitioning()) {
             player.update(keyHandler);
-            chiefRei.update(keyHandler);
+            for (NPC npc : npcs) npc.update(keyHandler);
             worldManager.checkPortal();
         }
         transition.update();
@@ -125,18 +117,19 @@ public class GamePanel extends JPanel implements Runnable {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
 
+
         tileManager.draw(g2);
-        structureManager.drawBeforePlayer(g2);  // bases where player is in front
+        structureManager.drawBeforePlayer(g2);
         player.draw(g2);
-        chiefRei.draw(g2);
-        structureManager.drawAfterPlayer(g2);   // bases where player is behind + all roofs
+        for (NPC npc : npcs) npc.draw(g2);
+        structureManager.drawAfterPlayer(g2);
         transition.draw(g2);
 
-        // World name top-left
+        for (NPC npc : npcs) npc.drawUI(g2);
+
         g2.setFont(new Font("Monospaced", Font.BOLD, 14));
         g2.setColor(Color.WHITE);
         g2.drawString(worldManager.getCurrentWorldName(), 16, 24);
-        System.out.println( (player.x/ tileSize) + "," + (player.y / tileSize));
 
         g2.dispose();
     }

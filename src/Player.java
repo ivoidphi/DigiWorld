@@ -1,4 +1,3 @@
-
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
@@ -17,12 +16,10 @@ public class Player {
     public int x, y;
     public int speed = 4;
 
-    // Collision box is smaller than the tile so it feels fair
-    // Adjust these offsets to match your sprite's feet area
-    private static final int CB_X_OFF = 8;   // left offset into tile
-    private static final int CB_Y_OFF = 24;  // top offset (pushes box to lower half)
-    private static final int CB_W     = 48;  // collision box width
-    private static final int CB_H     = 42;  // collision box height
+    private static final int CB_X_OFF = 8;
+    private static final int CB_Y_OFF = 24;
+    private static final int CB_W     = 48;
+    private static final int CB_H     = 42;
 
     List<BufferedImage> framesDown, framesLeft, framesRight, framesUp;
     List<BufferedImage> currentFrames;
@@ -66,14 +63,19 @@ public class Player {
         return frames;
     }
 
-    /** Returns the player's collision rectangle at their current position. */
     public Rectangle getCollisionRect() {
         return new Rectangle(x + CB_X_OFF, y + CB_Y_OFF, CB_W, CB_H);
     }
 
-    /** Returns a collision rectangle offset by (dx, dy) — used for lookahead. */
     private Rectangle getCollisionRect(int dx, int dy) {
         return new Rectangle(x + CB_X_OFF + dx, y + CB_Y_OFF + dy, CB_W, CB_H);
+    }
+
+    /** Returns true if the lookahead rect overlaps any NPC's collision box. */
+    private boolean collidesWithNPCs(Rectangle rect) {
+        for (NPC npc : gp.npcs)
+            if (npc.getCollisionRect().intersects(rect)) return true;
+        return false;
     }
 
     public void update(KeyHandler key) {
@@ -89,8 +91,8 @@ public class Player {
 
         if (dx != 0 || dy != 0) {
             moving = true;
-            // Only move if the destination doesn't collide with any structure
-            if (!gp.structureManager.collidesWithAny(getCollisionRect(dx, dy))) {
+            Rectangle next = getCollisionRect(dx, dy);
+            if (!gp.structureManager.collidesWithAny(next) && !collidesWithNPCs(next)) {
                 x += dx;
                 y += dy;
             }
@@ -122,7 +124,7 @@ public class Player {
             g2.drawImage(currentFrames.get(frameIndex), x, y, gp.tileSize, gp.tileSize, null);
 
         // Uncomment to debug collision box:
-        g2.setColor(Color.RED);
-         g2.draw(getCollisionRect());
+        // g2.setColor(Color.RED);
+        // g2.draw(getCollisionRect());
     }
 }

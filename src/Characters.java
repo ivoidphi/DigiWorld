@@ -3,29 +3,38 @@ import java.util.List;
 
 public class Characters {
 
-    public static List<NPC> loadAll(GamePanel gp) {
+    public static List<NPC> loadAll(GamePanel gp, int worldIndex) {
         List<NPC> npcs = new ArrayList<>();
 
-        npcs.add(new NPC(gp, "Prof. Alfred", 9, 2, "res/player/chief-rei.png",
+        switch (worldIndex) {
 
-                new String[]{
-                        "Welcome, traveler. I am Professor Alfred, guardian of this village.",
-                        "You seek the Alpha Beast? Then follow the Mystic Forest.",
-                        "The path will test you before you reach the Alpha. Be prepared."
-                }
-        ));
+            case 0 -> { // Alpha Village
+                npcs.add(new NPC(gp, "Prof. Alfred", 5, 3, "res/player/chief-rei.png",
+                        new String[]{
+                                "Welcome, traveler. I am Professor Alfred, guardian of this village.",
+                                "You seek the Alpha Beast? Then follow the Mystic Forest.",
+                                "The path will test you before you reach the Alpha. Be prepared."
+                        }
+                ));
+            }
 
-        npcs.add(new NPC(gp, "Chief Rei", 10, 5, "res/player/chief-rei.png",
+            case 1 -> { // Beta City
+                npcs.add(new NPC(gp, "Chief Rei", 5, 3, "res/player/chief-rei.png",
+                        new String[]{
+                                "Welcome hooman",
+                        }
+                ));
+            }
 
-                new String[]{
-                        "Welcome, home b*tch",
-                }
-        ));
+            case 2 -> { // Mystic Forest
+                npcs.add(new NPC(gp, "Challenger", 5, 3, "res/player/chief-rei.png",
+                        new String[]{
+                                "Hi bietch!",
+                        }
+                ));
+            }
+        }
 
-        npcs.add(new  NPC(gp, "Utin", 10, 2, "res/player/chief-rei.png",
-                new String[]{
-                    "Hi bietch!",
-                }));
         return npcs;
     }
 }

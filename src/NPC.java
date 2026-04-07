@@ -1,4 +1,3 @@
-
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
@@ -17,17 +16,35 @@ public class NPC {
 
     BufferedImage sprite;
 
-    public NPC(GamePanel gp, String name, int tileX, int tileY, String spritePath, String[] dialogue) {
+    // Collision box offsets relative to (x, y)
+    private int cbXOff, cbYOff, cbW, cbH;
+
+    // Default collision box — fits a typical 2-tile-tall NPC sprite
+    public NPC(GamePanel gp, String name, int tileX, int tileY, String spritePath,
+               String[] dialogue) {
+        this(gp, name, tileX, tileY, spritePath, dialogue, 16, 80, 96, 48);
+    }
+
+    public NPC(GamePanel gp, String name, int tileX, int tileY, String spritePath,
+               String[] dialogue, int cbXOff, int cbYOff, int cbW, int cbH) {
         this.gp = gp;
         this.name = name;
         this.x = tileX * gp.tileSize;
         this.y = tileY * gp.tileSize;
         this.dialogue = dialogue;
+        this.cbXOff = cbXOff;
+        this.cbYOff = cbYOff;
+        this.cbW = cbW;
+        this.cbH = cbH;
         try {
             sprite = ImageIO.read(new File(spritePath));
         } catch (IOException e) {
             System.out.println("Could not load NPC sprite: " + spritePath);
         }
+    }
+
+    public Rectangle getCollisionRect() {
+        return new Rectangle(x + cbXOff, y + cbYOff, cbW, cbH);
     }
 
     public boolean isPlayerNearby() {
@@ -55,8 +72,15 @@ public class NPC {
     public void draw(Graphics2D g2) {
         if (sprite != null)
             g2.drawImage(sprite, x, y, gp.tileSize * 2, gp.tileSize * 2, null);
-        if (talking)
-            drawDialogueBox(g2);
+
+        // Uncomment to debug collision box:
+        // g2.setColor(Color.CYAN);
+        // g2.draw(getCollisionRect());
+    }
+
+    /** Call this after ALL other draw calls so dialogue is always on top. */
+    public void drawUI(Graphics2D g2) {
+        if (talking) drawDialogueBox(g2);
     }
 
     private void drawDialogueBox(Graphics2D g2) {

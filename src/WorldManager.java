@@ -61,6 +61,7 @@ public class WorldManager {
         gp.tileManager.map = worlds[index].map;
         currentWorldIndex = index;
         gp.tileManager.map = worlds[index].map;
+        gp.npcs = Characters.loadAll(gp, index);
 
         gp.structureManager.clear(); // clear previous world's structures
 
