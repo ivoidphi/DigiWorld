@@ -8,64 +8,67 @@ public class TileManager {
 
     private final GamePanel gp;
     private final BufferedImage[] tileImages;
-    public boolean[] solidTiles = new boolean[10];
-
+    public boolean[] solidTiles;
     public int[][] map = new int[0][0];
-
-    private static final String[] TILE_PATHS = {
-            "res/tiles/dirt.png", //1
-            "res/tiles/tempblack.png", //2
-            "res/tiles/tempgray.png", //3
-            "res/tiles/tempgreen.png", //4
-            "res/tiles/tempblue.png", //5
-            "res/tiles/templime.png", //6
-            "res/tiles/tempmagenta.png", //7
-            "res/tiles/temporange.png", //8
-            "res/tiles/tempwhite.png", //9
-            "res/tiles/portal.png", //10
-    };
-
 
     public TileManager(GamePanel gp) {
         this.gp = gp;
-        tileImages = new BufferedImage[TILE_PATHS.length];
+        tileImages = new BufferedImage[24];
+        solidTiles = new boolean[24];
         loadTiles();
     }
 
     private void loadTiles() {
-        for (int i = 0; i < TILE_PATHS.length; i++) {
-            try {
-                tileImages[i] = ImageIO.read(new File(TILE_PATHS[i]));
-            } catch (IOException e) {
-                System.out.println("Could not load tile: " + TILE_PATHS[i]);
-            }
-        }
-        solidTiles[0] = false;
-        solidTiles[1] = false;
-        solidTiles[2] = false;
-        solidTiles[3] = false;
-        solidTiles[4] = true;
-        solidTiles[5] = false;
-        solidTiles[6] = false;
-        solidTiles[7] = false;
-        solidTiles[8] = false;
-        solidTiles[9] = false;
+        load(0,  "res/tiles/dirt.png");
+        load(1,  "res/tiles/tempblack.png");
+        load(2,  "res/tiles/tempgray.png");
+        load(3,  "res/tiles/tempgreen.png");
+        load(4,  "res/tiles/tempblue.png");
+        load(5,  "res/tiles/templime.png");
+        load(6,  "res/tiles/tempmagenta.png");
+        load(7,  "res/tiles/temporange.png");
+        load(8,  "res/tiles/tempwhite.png");
+        load(9,  "res/tiles/portal.png");
+        load(11, "res/tiles/gblade1.png");
+        load(12, "res/tiles/Grass1.png");
+        load(13, "res/tiles/Grass2.png");
+        load(14, "res/tiles/Grass3.png");
+        load(15, "res/tiles/DPathTop.png");
+        load(16, "res/tiles/DPathLeft.png");
+        load(17, "res/tiles/DPathRight.png");
+        load(18, "res/tiles/DPathBot.png");
+        load(19, "res/tiles/procktleft.png");
+        load(20, "res/tiles/procktright.png");
+        load(21, "res/tiles/prockbleft.png");
+        load(22, "res/tiles/prockbright.png");
+        load(23, "res/tiles/Doorstep.png");
+
+        // Set solid tiles — add more IDs here as needed
+        // solidTiles[1] = true; // example: tempblack is solid
     }
 
+    private void load(int index, String path) {
+        try { tileImages[index] = ImageIO.read(new File(path)); }
+        catch (IOException e) { System.out.println("Could not load tile: " + path); }
+    }
+
+    /** Used by Player for tile-based collision. */
     public boolean isSolid(int pixelX, int pixelY) {
         int col = pixelX / gp.tileSize;
         int row = pixelY / gp.tileSize;
         if (row < 0 || row >= map.length)    return true;
         if (col < 0 || col >= map[0].length) return true;
-        return solidTiles[map[row][col]];
+        int tileId = map[row][col];
+        if (tileId < 0 || tileId >= solidTiles.length) return false;
+        return solidTiles[tileId];
     }
 
     public void draw(Graphics2D g2) {
         for (int row = 0; row < map.length; row++) {
             for (int col = 0; col < map[row].length; col++) {
-                int x = col * gp.tileSize;
-                int y = row * gp.tileSize;
-                g2.drawImage(tileImages[map[row][col]], x, y, gp.tileSize, gp.tileSize, null);
+                int id = map[row][col];
+                if (id < 0 || id >= tileImages.length || tileImages[id] == null) continue;
+                g2.drawImage(tileImages[id], col * gp.tileSize, row * gp.tileSize, gp.tileSize, gp.tileSize, null);
             }
         }
     }
