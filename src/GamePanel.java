@@ -10,24 +10,25 @@ public class GamePanel extends JPanel implements Runnable {
     final int tileSize = 64;
     final int screenCols = 16;
     final int screenRows = 12;
-    final int screenWidth = tileSize * screenCols;
+    final int screenWidth  = tileSize * screenCols;
     final int screenHeight = tileSize * screenRows;
     final int FPS = 60;
 
     List<NPC> npcs = new ArrayList<>();
     Thread gameThread;
 
-    KeyHandler keyHandler = new KeyHandler();
-    Player player = new Player(this);
-    TileManager tileManager = new TileManager(this);
+    KeyHandler keyHandler       = new KeyHandler();
+    Player player               = new Player(this);
+    TileManager tileManager     = new TileManager(this);
+    StructureManager structureManager = new StructureManager(this); // Branch 1
     WorldManager worldManager;
     TransitionManager transition;
-    BattleSequence battle;
+    BattleSequence battle;                                           // Branch 2
 
-    final GameState gameState = new GameState();
-    IntroSequence introSequence;
-    BeastSelectionScreen beastSelection;
-    AppMode appMode = AppMode.INTRO;
+    final GameState gameState   = new GameState();                   // Branch 2
+    IntroSequence introSequence;                                     // Branch 2
+    BeastSelectionScreen beastSelection;                             // Branch 2
+    AppMode appMode             = AppMode.INTRO;                     // Branch 2
 
     private Clip walkSound;
 
@@ -38,13 +39,14 @@ public class GamePanel extends JPanel implements Runnable {
         setFocusable(true);
         addKeyListener(keyHandler);
 
-        introSequence = new IntroSequence(gameState);
+        introSequence  = new IntroSequence(gameState);
         beastSelection = new BeastSelectionScreen(gameState);
 
         worldManager = new WorldManager(this);
-        transition = new TransitionManager(this);
-        battle = new BattleSequence(this, gameState);
-        npcs = Characters.loadAll(this);
+        transition   = new TransitionManager(this);
+        battle       = new BattleSequence(this, gameState);
+
+        npcs = Characters.loadAll(this, World.ALPHA_VILLAGE);
 
         playBackgroundMusic();
     }
@@ -52,10 +54,10 @@ public class GamePanel extends JPanel implements Runnable {
     private void playBackgroundMusic() {
         try {
             AudioInputStream stream = AudioSystem.getAudioInputStream(new File("res/SOUNDS/BG_MUSIC.wav"));
-            Clip backgroundMusic = AudioSystem.getClip();
-            backgroundMusic.open(stream);
-            ((FloatControl) backgroundMusic.getControl(FloatControl.Type.MASTER_GAIN)).setValue(-35.0f);
-            backgroundMusic.loop(Clip.LOOP_CONTINUOUSLY);
+            Clip clip = AudioSystem.getClip();
+            clip.open(stream);
+            ((FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN)).setValue(-35.0f);
+            clip.loop(Clip.LOOP_CONTINUOUSLY);
         } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
             System.out.println("Error playing background music.");
         }
@@ -82,9 +84,7 @@ public class GamePanel extends JPanel implements Runnable {
         if (walkSound != null && walkSound.isRunning()) walkSound.stop();
     }
 
-    public GameState getGameState() {
-        return gameState;
-    }
+    public GameState getGameState() { return gameState; }
 
     public void startGameLoop() {
         gameThread = new Thread(this);
@@ -96,35 +96,24 @@ public class GamePanel extends JPanel implements Runnable {
         double drawInterval = 1_000_000_000.0 / FPS;
         double delta = 0;
         long lastTime = System.nanoTime();
-
         while (gameThread != null) {
             long currentTime = System.nanoTime();
             delta += (currentTime - lastTime) / drawInterval;
             lastTime = currentTime;
-            if (delta >= 1) {
-                update();
-                repaint();
-                delta--;
-            }
+            if (delta >= 1) { update(); repaint(); delta--; }
         }
     }
 
     private void update() {
         if (appMode == AppMode.INTRO) {
             introSequence.update(keyHandler);
-            if (introSequence.isFinished()) {
-                beastSelection.reset();
-                appMode = AppMode.BEAST_SELECT;
-            }
+            if (introSequence.isFinished()) { beastSelection.reset(); appMode = AppMode.BEAST_SELECT; }
             keyHandler.clearPressed();
             return;
         }
-
         if (appMode == AppMode.BEAST_SELECT) {
             beastSelection.update(keyHandler);
-            if (beastSelection.isFinished()) {
-                appMode = AppMode.WORLD;
-            }
+            if (beastSelection.isFinished()) appMode = AppMode.WORLD;
             keyHandler.clearPressed();
             return;
         }
@@ -159,18 +148,24 @@ public class GamePanel extends JPanel implements Runnable {
             g2.dispose();
             return;
         }
-
         if (appMode == AppMode.BEAST_SELECT) {
             beastSelection.draw(g2, screenWidth, screenHeight);
             g2.dispose();
             return;
         }
 
+        // World rendering with structure support (Branch 1)
         tileManager.draw(g2);
+        structureManager.drawBeforePlayer(g2);
         player.draw(g2);
         for (NPC npc : npcs) npc.draw(g2);
+        structureManager.drawAfterPlayer(g2);
         transition.draw(g2);
 
+        // NPC dialogue always on top (Branch 1)
+        for (NPC npc : npcs) npc.drawUI(g2);
+
+        // HUD
         if (!battle.isActive()) {
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
             g2.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 20));
@@ -182,13 +177,10 @@ public class GamePanel extends JPanel implements Runnable {
             g2.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
             g2.setColor(new Color(190, 200, 225));
             UiText.drawWrapped(g2, gameState.getStageLabel(), 14, 58, screenWidth - 28, 18, 2);
-            g2.drawString("Tile " + (player.x / tileSize) + ", " + (player.y / tileSize), 14, 100);
-            UiText.drawWrapped(g2, "B: practice battle. Mystic→House needs forest tutorial (B).", 14, 118, screenWidth - 28, 16, 3);
         }
 
-        if (battle.isActive()) {
-            battle.draw(g2);
-        }
+        // Battle overlay always on top (Branch 2)
+        if (battle.isActive()) battle.draw(g2);
 
         g2.dispose();
     }

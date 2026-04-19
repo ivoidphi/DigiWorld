@@ -13,31 +13,45 @@ public class NPC {
     private final int x, y;
     private final int worldIndex;
 
+    // Collision box offsets relative to (x, y)
+    private final int cbXOff, cbYOff, cbW, cbH;
+
     private int dialogueIndex = 0;
     private boolean talking = false;
 
-    public NPC(GamePanel gp, String name, int tileX, int tileY, String spritePath, int worldIndex, String[] dialogue) {
+    /** Default collision box constructor — used by Characters.java. */
+    public NPC(GamePanel gp, String name, int tileX, int tileY, String spritePath,
+               int worldIndex, String[] dialogue) {
+        this(gp, name, tileX, tileY, spritePath, worldIndex, dialogue, 16, 80, 96, 48);
+    }
+
+    /** Full constructor with custom collision box. */
+    public NPC(GamePanel gp, String name, int tileX, int tileY, String spritePath,
+               int worldIndex, String[] dialogue, int cbXOff, int cbYOff, int cbW, int cbH) {
         this.gp = gp;
         this.name = name;
         this.x = tileX * gp.tileSize;
         this.y = tileY * gp.tileSize;
         this.worldIndex = worldIndex;
         this.dialogue = dialogue;
+        this.cbXOff = cbXOff;
+        this.cbYOff = cbYOff;
+        this.cbW = cbW;
+        this.cbH = cbH;
         this.sprite = loadSprite(spritePath);
     }
 
     private BufferedImage loadSprite(String path) {
-        try {
-            return ImageIO.read(new File(path));
-        } catch (IOException e) {
-            System.out.println("Could not load NPC sprite: " + path);
-            return null;
-        }
+        try { return ImageIO.read(new File(path)); }
+        catch (IOException e) { System.out.println("Could not load NPC sprite: " + path); return null; }
+    }
+
+    public Rectangle getCollisionRect() {
+        return new Rectangle(x + cbXOff, y + cbYOff, cbW, cbH);
     }
 
     private boolean isInCurrentWorld() {
-        return gp.worldManager.getCurrentWorld() != null
-                && gp.worldManager.currentWorldIndex == worldIndex;
+        return gp.worldManager.currentWorldIndex == worldIndex;
     }
 
     private boolean isPlayerNearby() {
@@ -59,10 +73,7 @@ public class NPC {
     }
 
     public void update(KeyHandler key) {
-        if (!isInCurrentWorld()) {
-            talking = false;
-            return;
-        }
+        if (!isInCurrentWorld()) { talking = false; return; }
         if (key.interactPressed && isPlayerNearby()) interact();
     }
 
@@ -70,62 +81,54 @@ public class NPC {
         if (!isInCurrentWorld()) return;
         if (sprite != null)
             g2.drawImage(sprite, x, y, gp.tileSize * 2, gp.tileSize * 2, null);
-        if (talking)
-            drawDialogueBox(g2);
+
+        // Uncomment to debug collision box:
+        // g2.setColor(Color.CYAN);
+        // g2.draw(getCollisionRect());
+    }
+
+    /** Call after ALL other draw calls so dialogue is always on top. */
+    public void drawUI(Graphics2D g2) {
+        if (!isInCurrentWorld()) return;
+        if (talking) drawDialogueBox(g2);
     }
 
     private void drawDialogueBox(Graphics2D g2) {
-        int boxX = 20;
-        int boxY = gp.screenHeight - 160;
-        int boxW = gp.screenWidth - 40;
-        int boxH = 140;
-        int arc  = 8;
-        int border = 4;
+        int boxX = 20, boxY = gp.screenHeight - 160;
+        int boxW = gp.screenWidth - 40, boxH = 140, arc = 8, border = 4;
 
-        // Outer dark border
         g2.setColor(Color.BLACK);
         g2.fillRoundRect(boxX, boxY, boxW, boxH, arc, arc);
-
-        // Inner white box
         g2.setColor(new Color(248, 248, 248));
         g2.fillRoundRect(boxX + border, boxY + border, boxW - border * 2, boxH - border * 2, arc, arc);
-
-        // Inner inner dark border line
         g2.setColor(Color.BLACK);
         g2.setStroke(new BasicStroke(2));
         g2.drawRoundRect(boxX + border + 4, boxY + border + 4, boxW - (border + 4) * 2, boxH - (border + 4) * 2, arc, arc);
 
-        // Name tag box (top left, outside/overlapping the main box)
-        int nameBoxX = boxX + 16;
-        int nameBoxY = boxY - 36;
-        int nameBoxW = 160;
-        int nameBoxH = 40;
-
+        // Name tag
+        int nameBoxX = boxX + 16, nameBoxY = boxY - 36;
+        int nameBoxW = 160, nameBoxH = 40;
         g2.setColor(Color.BLACK);
         g2.fillRoundRect(nameBoxX, nameBoxY, nameBoxW, nameBoxH, arc, arc);
-
         g2.setColor(new Color(248, 248, 248));
         g2.fillRoundRect(nameBoxX + border, nameBoxY + border, nameBoxW - border * 2, nameBoxH - border * 2, arc, arc);
-
         g2.setColor(Color.BLACK);
         g2.setStroke(new BasicStroke(2));
         g2.drawRoundRect(nameBoxX + border + 2, nameBoxY + border + 2, nameBoxW - (border + 2) * 2, nameBoxH - (border + 2) * 2, arc, arc);
-
-        // Name text
         g2.setFont(new Font(Font.DIALOG_INPUT, Font.BOLD, 16));
         g2.setColor(Color.BLACK);
         g2.drawString(name, nameBoxX + 12, nameBoxY + 26);
 
+        // Dialogue text
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        int textPadX = 28;
-        int textPadRight = 28;
+        int textPadX = 28, textPadRight = 28;
         int textMaxW = boxW - textPadX - textPadRight;
         g2.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 18));
         g2.setColor(new Color(25, 28, 38));
         UiText.drawWrapped(g2, dialogue[dialogueIndex], boxX + textPadX, boxY + 48, textMaxW, 24, 4);
 
-        long now = System.currentTimeMillis();
-        boolean blink = (now / 500) % 2 == 0;
+        // Blinking prompt + arrow
+        boolean blink = (System.currentTimeMillis() / 500) % 2 == 0;
         if (blink) {
             g2.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 14));
             FontMetrics fm = g2.getFontMetrics();
@@ -133,12 +136,9 @@ public class NPC {
             int hintW = fm.stringWidth(hint);
             int hintX = Math.max(boxX + textPadX, boxX + boxW - hintW - textPadX);
             g2.drawString(hint, hintX, boxY + boxH - 18);
-            int arrowX = boxX + boxW - 26;
-            int arrowY = boxY + boxH - 22;
-            int[] ax = { arrowX, arrowX + 12, arrowX + 6 };
-            int[] ay = { arrowY, arrowY, arrowY + 8 };
+            int ax = boxX + boxW - 26, ay = boxY + boxH - 22;
             g2.setColor(Color.BLACK);
-            g2.fillPolygon(ax, ay, 3);
+            g2.fillPolygon(new int[]{ax, ax + 12, ax + 6}, new int[]{ay, ay, ay + 8}, 3);
         }
     }
 }

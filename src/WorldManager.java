@@ -10,7 +10,7 @@ public class WorldManager {
         this.gp = gp;
         worlds = new World[]{
 
-                new World("Alpha Village", 1, new int[][]{
+                new World("Alpha Village", World.BETA_CITY, new int[][]{
                         {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
                         {1,9,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
                         {1,1,1,1,2,2,2,2,1,1,1,1,1,1,1,1},
@@ -25,22 +25,22 @@ public class WorldManager {
                         {1,1,1,1,1,8,1,1,1,1,1,1,1,1,1,1},
                 }),
 
-                new World("Beta City", 2, new int[][]{
-                        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                        {0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                        {0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0},
-                        {0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0},
-                        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                        {0,0,0,0,0,8,0,0,0,0,0,0,0,0,0,0},
+                new World("Beta City", World.MYSTIC_FOREST, new int[][]{
+                        {13,11,14,14,13,11,12,16,17,13,11,11,12,11,14,12},
+                        {13,9, 14,12,12,12,14,16,17,11,11,12,13,14,12,13},
+                        {14,12,13,11,12,13,12,16,17,12,12,12,12,14,14,11},
+                        {11,12,12,14,11,12,14,16,17,12,12,23,14,12,12,12},
+                        {14,11,12,14,12,13,13,16,17,12,11,23,13,14,14,13},
+                        {15,15,15,15,15,15,15,21,20,15,15,15,15,15,15,15},
+                        {18,18,18,18,18,18,18,19,22,18,18,18,18,18,18,18},
+                        {13,11,13,14,11,14,14,16,17,14,12,13,12,14,13,13},
+                        {11,12,14,14,14,11,11,16,17,13,12,13,11,12,12,14},
+                        {14,14,11,11,13,13,14,16,17,12,12,11,11,14,14,12},
+                        {14,14,11,12,12,12,14,16,17,14,11,23,11,11,11,14},
+                        {14,13,13,14,12,14,13,16,17,11,11,23,12,13,11,12},
                 }),
 
-                new World("Mystic Forest", 3, new int[][]{
+                new World("Mystic Forest", World.HOUSE, new int[][]{
                         {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
                         {0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
                         {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
@@ -55,7 +55,7 @@ public class WorldManager {
                         {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
                 }),
 
-                new World("House", 0, new int[][]{
+                new World("House", World.ALPHA_VILLAGE, new int[][]{
                         {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
                         {0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
                         {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
@@ -70,34 +70,40 @@ public class WorldManager {
                         {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
                 }),
         };
-        loadWorld(0);
+        loadWorld(World.ALPHA_VILLAGE);
     }
 
     public void loadWorld(int index) {
         currentWorldIndex = index;
         gp.tileManager.map = worlds[index].map;
+
+        // Reload NPCs for this world (Branch 1)
+        gp.npcs = Characters.loadAll(gp, index);
+
+        // Clear and place structures for this world (Branch 1)
+        gp.structureManager.clear();
+        if (index == World.ALPHA_VILLAGE) {
+            gp.structureManager.placeHouse1(10, 2);
+        }
+        if (index == World.BETA_CITY) {
+            gp.structureManager.placeHouse1(9, 1);
+            gp.structureManager.placeLab(9, 8);
+        }
     }
 
-    public World getCurrentWorld() {
-        return worlds[currentWorldIndex];
-    }
-
-    public String getCurrentWorldName() {
-        return getCurrentWorld().getName();
-    }
+    public World getCurrentWorld() { return worlds[currentWorldIndex]; }
+    public String getCurrentWorldName() { return getCurrentWorld().getName(); }
 
     public void checkPortal() {
-        int playerCol = gp.player.x / gp.tileSize;
-        int playerRow = gp.player.y / gp.tileSize;
+        int col = gp.player.x / gp.tileSize;
+        int row = gp.player.y / gp.tileSize;
         int[][] map = getCurrentWorld().map;
-        if (playerRow < 0 || playerRow >= map.length)    return;
-        if (playerCol < 0 || playerCol >= map[0].length) return;
-        if (map[playerRow][playerCol] == PORTAL_TILE) {
+        if (row < 0 || row >= map.length)    return;
+        if (col < 0 || col >= map[0].length) return;
+        if (map[row][col] == PORTAL_TILE) {
             int from = currentWorldIndex;
-            int to = getCurrentWorld().getPortalDestination();
-            if (!gp.getGameState().canUsePortal(from, to)) {
-                return;
-            }
+            int to   = getCurrentWorld().getPortalDestination();
+            if (!gp.getGameState().canUsePortal(from, to)) return;
             gp.transition.triggerTransition(from, to);
         }
     }
