@@ -82,6 +82,7 @@ public class Player {
         if (dx != 0 || dy != 0) {
             moving = true;
             Rectangle next = getCollisionRect(dx, dy);
+            if (gp.doorManager.checkAt(next)) return;
 
             // Check tile collision + structure collision + NPC collision
             if (!isCollidingAt(x + dx, y + dy)

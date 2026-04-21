@@ -14,7 +14,7 @@ public class Characters {
         switch (worldIndex) {
 
             case World.ALPHA_VILLAGE -> {
-                npcs.add(new NPC(gp, "Professor Alfred", 9, 2, "res/player/chief-rei.png",
+                npcs.add(new NPC(gp, "Professor Alfred", 5, 4, "res/player/chief-rei.png",
                         World.ALPHA_VILLAGE,
                         new String[]{
                                 "Welcome to the beta test. Your first mission is to reach Alpha Village and challenge the Alpha Beast.",
@@ -26,7 +26,7 @@ public class Characters {
             }
 
             case World.BETA_CITY -> {
-                npcs.add(new NPC(gp, "Utin", 10, 2, "res/player/chief-rei.png",
+                npcs.add(new NPC(gp, "Utin", 5, 4, "res/player/chief-rei.png",
                         World.BETA_CITY,
                         new String[]{
                                 "Beta City — full test ahead. Defeat the Ace Trainer for a Challenge Ticket, then head to the Tournament Hall."
@@ -43,9 +43,9 @@ public class Characters {
                 ));
             }
 
-            case World.HOUSE -> {
-                npcs.add(new NPC(gp, "Chief Rei", 10, 5, "res/player/chief-rei.png",
-                        World.HOUSE,
+            case World.HOUSE_1 -> {
+                npcs.add(new NPC(gp, "Chief Rei", 5, 4, "res/player/chief-rei.png",
+                        World.HOUSE_1,
                         new String[]{
                                 "Welcome, traveler. I am Chief Rei, guardian of this village. What is it you seek?",
                                 "The Alpha Beast? Then follow the Mystic Forest. The path will test you before you reach the Alpha. Be prepared."

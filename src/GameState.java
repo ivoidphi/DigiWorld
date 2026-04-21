@@ -115,7 +115,7 @@ public final class GameState {
      * Later: optional Alpha Beast (Aldrich) gate — see {@link #setAldrichDefeated(boolean)}.
      */
     public boolean canUsePortal(int fromWorld, int toWorld) {
-        if (fromWorld == World.MYSTIC_FOREST && toWorld == World.HOUSE) {
+        if (fromWorld == World.MYSTIC_FOREST && toWorld == World.HOUSE_1) {
             return tutorialBattleComplete;
         }
         if (fromWorld == World.BETA_CITY && toWorld == World.MYSTIC_FOREST

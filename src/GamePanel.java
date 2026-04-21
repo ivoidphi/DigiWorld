@@ -24,6 +24,7 @@ public class GamePanel extends JPanel implements Runnable {
     WorldManager worldManager;
     TransitionManager transition;
     BattleSequence battle;                                           // Branch 2
+    DoorManager doorManager;
 
     final GameState gameState   = new GameState();                   // Branch 2
     IntroSequence introSequence;                                     // Branch 2
@@ -43,6 +44,7 @@ public class GamePanel extends JPanel implements Runnable {
         beastSelection = new BeastSelectionScreen(gameState);
 
         worldManager = new WorldManager(this);
+        doorManager = new DoorManager(this);
         transition   = new TransitionManager(this);
         battle       = new BattleSequence(this, gameState);
 
@@ -129,6 +131,8 @@ public class GamePanel extends JPanel implements Runnable {
             player.update(keyHandler);
             for (NPC npc : npcs) npc.update(keyHandler);
             worldManager.checkPortal();
+            doorManager.check();
+
             if (keyHandler.battlePressed) {
                 boolean tut = !gameState.isTutorialBattleComplete();
                 battle.startWildBattle(BattleCreature.fromId(MechaBeastId.VINERATOPS, 4), tut ? 30 : 50, tut);
@@ -164,6 +168,28 @@ public class GamePanel extends JPanel implements Runnable {
 
         // NPC dialogue always on top (Branch 1)
         for (NPC npc : npcs) npc.drawUI(g2);
+
+        // Debug: player tile coordinates (bottom-right)
+        g2.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+        g2.setColor(new Color(190, 200, 225));
+        String coords = "Tile " + (player.x / tileSize) + ", " + (player.y / tileSize);
+        int coordW = g2.getFontMetrics().stringWidth(coords);
+        g2.drawString(coords, screenWidth - coordW - 12, screenHeight - 12);
+
+        // Debug: draw door tile rectangles in yellow
+        //g2.setColor(new Color(255, 255, 0, 120));
+        //for (DoorEntry door : doorManager.getDoors()) {
+        //    if (door.sourceWorld == worldManager.currentWorldIndex) {
+        //        g2.fillRect(door.doorCol * tileSize, door.doorRow * tileSize, tileSize, tileSize);
+        //    }
+       // }
+
+
+
+        // Debug: draw player collision rect in red
+        //g2.setColor(new Color(255, 0, 0, 120));
+        //java.awt.Rectangle r = player.getCollisionRect();
+        //g2.fillRect(r.x, r.y, r.width, r.height);
 
         // HUD
         if (!battle.isActive()) {

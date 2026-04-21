@@ -40,7 +40,7 @@ public class WorldManager {
                         {14,13,13,14,12,14,13,16,17,11,11,23,12,13,11,12},
                 }),
 
-                new World("Mystic Forest", World.HOUSE, new int[][]{
+                new World("Mystic Forest", World.HOUSE_1, new int[][]{
                         {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
                         {0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
                         {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
@@ -55,7 +55,7 @@ public class WorldManager {
                         {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
                 }),
 
-                new World("House", World.ALPHA_VILLAGE, new int[][]{
+                new World("House 1", World.BETA_CITY, 8, 9, new int[][]{
                         {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
                         {0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
                         {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
@@ -70,7 +70,7 @@ public class WorldManager {
                         {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
                 }),
         };
-        loadWorld(World.ALPHA_VILLAGE);
+        loadWorld(World.BETA_CITY);
     }
 
     public void loadWorld(int index) {
